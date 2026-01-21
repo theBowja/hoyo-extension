@@ -42,3 +42,67 @@ chrome.action.onClicked.addListener(() => {
     // This will be handled by the popup automatically
     console.log('[Data Bridge Background] Extension icon clicked');
 });
+
+/**
+ * Handle messages from content scripts
+ */
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log('[Data Bridge Background] Received message:', request.action);
+
+    // Handle fetch requests from content scripts
+    if (request.action === 'FETCH_API') {
+        handleBackgroundFetch(request.url, request.options)
+            .then(response => {
+                sendResponse({ success: true, data: response });
+            })
+            .catch(error => {
+                sendResponse({ success: false, error: error.message });
+            });
+
+        // Return true to indicate we will send a response asynchronously
+        return true;
+    }
+
+    // Handle other message types here
+    return false;
+});
+
+/**
+ * Fetch data from Site A's API with user credentials
+ * This runs in the background script context, allowing it to make
+ * cross-origin requests with the user's cookies
+ * 
+ * @param {string} url - The API URL to fetch from
+ * @param {Object} options - Additional fetch options to merge
+ * @returns {Promise<Object>} The parsed JSON response
+ */
+async function handleBackgroundFetch(url, options = {}) {
+    try {
+        console.log('[Data Bridge Background] Fetching:', url);
+
+        // Merge options with defaults
+        const fetchOptions = {
+            method: 'GET',
+            credentials: 'include', // Include cookies for authentication
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            },
+            ...options
+        };
+
+        const response = await fetch(url, fetchOptions);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('[Data Bridge Background] Fetch successful:', data);
+
+        return data;
+    } catch (error) {
+        console.error('[Data Bridge Background] Fetch failed:', error);
+        throw error;
+    }
+}

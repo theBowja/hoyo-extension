@@ -8,7 +8,8 @@
     "downloads"
   ],
   "host_permissions": [
-    "https://site-a.com/*",
+    "https://act.hoyolab.com/*",
+    "https://sg-public-api.hoyolab.com/*",
     "https://my-static-dashboard.com/*"
   ],
   "background": {
@@ -30,7 +31,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://site-a.com/*"
+        "https://act.hoyolab.com/app/community-game-records-sea/*"
       ],
       "js": [
         "src/scripts/content.js"
@@ -53,7 +54,7 @@
         "src/scripts/interceptor.js"
       ],
       "matches": [
-        "https://site-a.com/*"
+        "https://act.hoyolab.com/*"
       ]
     }
   ]

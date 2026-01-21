@@ -10,6 +10,7 @@ A cross-browser extension (Manifest V3) for Chrome, Edge, and Firefox that captu
 - **Beautiful Dashboard**: Auto-updating dashboard to view all captured data
 - **Extension Popup**: Quick stats and data management from the browser toolbar
 - **Data Export**: Export captured data as JSON files
+- **Background Fetch API**: Make authenticated API requests via background script with user cookies (see [BACKGROUND_FETCH.md](BACKGROUND_FETCH.md))
 - **Cross-browser Compatible**: Works on Chrome, Edge, and Firefox
 
 ## 📁 Project Structure
@@ -21,6 +22,7 @@ A cross-browser extension (Manifest V3) for Chrome, Edge, and Firefox that captu
 │   │   ├── interceptor.js # Main world fetch interceptor
 │   │   ├── content.js     # Isolated world bridge script
 │   │   ├── background.js  # Background service worker
+│   │   ├── api-helper.js  # API fetch helper functions
 │   │   └── dashboard.js   # Dashboard data viewer
 │   ├── /ui                # User interface files
 │   │   ├── popup.html     # Extension popup
@@ -35,6 +37,8 @@ A cross-browser extension (Manifest V3) for Chrome, Edge, and Firefox that captu
 ├── manifest.json          # Extension manifest (V3)
 ├── package.json           # Build scripts and metadata
 ├── .gitignore            # Git ignore rules
+├── BACKGROUND_FETCH.md   # Background fetch API documentation
+├── BUILD.md              # Build instructions
 ├── LICENSE               # License file
 └── README.md             # This file
 ```
