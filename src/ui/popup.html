@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Bridge Extension</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <div class="popup-header">
+      <h1>🌉 Data Bridge</h1>
+      <p class="subtitle">Cross-Site Request Capture</p>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="stats-section">
+      <div class="stat-card">
+        <div class="stat-value" id="total-captures">0</div>
+        <div class="stat-label">Total Captures</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="last-capture-time">Never</div>
+        <div class="stat-label">Last Capture</div>
+      </div>
+    </div>
+
+    <!-- Latest Capture Preview -->
+    <div class="preview-section" id="preview-section" style="display: none;">
+      <h3>Latest Capture</h3>
+      <div class="preview-content">
+        <div class="preview-method" id="preview-method">POST</div>
+        <div class="preview-url" id="preview-url"></div>
+        <div class="preview-timestamp" id="preview-timestamp"></div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-section">
+      <button class="btn btn-primary" id="view-all-btn">
+        <span>📊 View All Data</span>
+      </button>
+      <button class="btn btn-secondary" id="clear-data-btn">
+        <span>🗑️ Clear All Data</span>
+      </button>
+      <button class="btn btn-secondary" id="export-btn">
+        <span>💾 Export JSON</span>
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <div class="popup-footer">
+      <div class="status-indicator">
+        <span class="status-dot" id="status-dot"></span>
+        <span class="status-text" id="status-text">Active</span>
+      </div>
+      <div class="version">v1.0.0</div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

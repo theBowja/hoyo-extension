@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "Data Bridge Extension",
+  "version": "1.0.0",
+  "description": "Captures JSON request payloads from Site A and bridges them to a static dashboard",
+  "permissions": [
+    "storage",
+    "downloads"
+  ],
+  "host_permissions": [
+    "https://site-a.com/*",
+    "https://my-static-dashboard.com/*"
+  ],
+  "background": {
+    "service_worker": "src/scripts/background.js"
+  },
+  "action": {
+    "default_popup": "src/ui/popup.html",
+    "default_icon": {
+      "16": "src/icons/icon-16.png",
+      "48": "src/icons/icon-48.png",
+      "128": "src/icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "src/icons/icon-16.png",
+    "48": "src/icons/icon-48.png",
+    "128": "src/icons/icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://site-a.com/*"
+      ],
+      "js": [
+        "src/scripts/content.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://my-static-dashboard.com/*"
+      ],
+      "js": [
+        "src/scripts/dashboard.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/scripts/interceptor.js"
+      ],
+      "matches": [
+        "https://site-a.com/*"
+      ]
+    }
+  ]
+}
