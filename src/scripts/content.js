@@ -25,42 +25,30 @@
      */
     window.addEventListener('message', async (event) => {
         // Only accept messages from the same origin
-        if (event.source !== window) {
-            return;
-        }
+        if (event.source !== window) return;
+        if (event.origin !== window.location.origin) return;
 
         // Check if character list API was detected (user is logged in)
-        if (event.data && event.data.type === 'HOYOLAB_CHARACTER_LIST_DETECTED') {
+        if (event.data?.type === 'HOYOLAB_CHARACTER_LIST_DETECTED') {
             const { requestPayload, responseData, timestamp } = event.data;
 
             console.log('[Data Bridge Content] HoYoLAB character list detected!');
             console.log('[Data Bridge Content] Request:', requestPayload);
             console.log('[Data Bridge Content] Response:', responseData);
 
-            try {
-                // Store the character list data for button use
-                await chrome.storage.local.set({
-                    hoyolabCharacterListRequest: requestPayload,
-                    hoyolabCharacterListResponse: responseData,
-                    hoyolabDataTimestamp: timestamp
-                });
+            console.log('[Data Bridge Content] Data received, injecting buttons...');
 
-                console.log('[Data Bridge Content] HoYoLAB data stored, injecting buttons...');
+            // Inject buttons passing the data directly
+            setTimeout(() => {
+                injectTestButton();
+                injectAPITestButton(requestPayload, responseData, timestamp);
+            }, 500);
 
-                // Inject buttons now that we have the data
-                setTimeout(() => {
-                    injectTestButton();
-                    injectAPITestButton();
-                }, 500);
-
-            } catch (error) {
-                console.error('[Data Bridge Content] Error storing HoYoLAB data:', error);
-            }
             return;
         }
 
         // Check if this is our capture message
-        if (event.data && event.data.type === 'DATA_BRIDGE_CAPTURE') {
+        if (event.data?.type === 'DATA_BRIDGE_CAPTURE') {
             const { payload, url, method, timestamp } = event.data;
 
             try {
@@ -382,8 +370,10 @@
 
     /**
      * Inject API test button for testing background fetch
+     * @param {Object} requestPayload - The intercepted request payload
+     * @param {Object} responseData - The intercepted response data
      */
-    function injectAPITestButton() {
+    function injectAPITestButton(requestPayload, responseData) {
         // Check if we're on the specific page
         if (!window.location.href.includes('act.hoyolab.com/app/community-game-records-sea')) {
             return;
@@ -427,8 +417,8 @@
             button.style.boxShadow = '0 4px 12px rgba(72, 187, 120, 0.4)';
         });
 
-        // Click handler
-        button.addEventListener('click', testAPIFetch);
+        // Click handler - pass the data directly
+        button.addEventListener('click', () => testAPIFetch(requestPayload, responseData));
 
         // Add to page
         document.body.appendChild(button);
@@ -437,9 +427,11 @@
 
     /**
      * Test fetching character details from HoYoLAB API via background script
-     * This uses the stored character list data to fetch details for all characters
+     * This uses the passed character list data to fetch details for all characters
+     * @param {Object} requestPayload - The intercepted request payload
+     * @param {Object} responseData - The intercepted response data
      */
-    async function testAPIFetch() {
+    async function testAPIFetch(requestPayload, responseData) {
         console.log('[Data Bridge] Testing character detail API fetch...');
 
         // Update button to show loading state
@@ -450,18 +442,13 @@
         button.style.opacity = '0.7';
 
         try {
-            // Get stored character list data
-            const stored = await chrome.storage.local.get([
-                'hoyolabCharacterListRequest',
-                'hoyolabCharacterListResponse'
-            ]);
-
-            if (!stored.hoyolabCharacterListRequest || !stored.hoyolabCharacterListResponse) {
-                throw new Error('No character list data found. Please refresh the page.');
+            console.log('[Data Bridge] Received character list data:', requestPayload, responseData);
+            if (!requestPayload || !responseData) {
+                throw new Error('No character list data provided.');
             }
 
-            const { server, role_id } = stored.hoyolabCharacterListRequest;
-            const characterListData = stored.hoyolabCharacterListResponse.data;
+            const { server, role_id } = requestPayload;
+            const characterListData = responseData.data;
 
             if (!characterListData || !characterListData.list || characterListData.list.length === 0) {
                 throw new Error('No characters found in the list');
