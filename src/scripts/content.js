@@ -40,7 +40,6 @@
 
             // Inject buttons passing the data directly
             setTimeout(() => {
-                injectTestButton();
                 injectAPITestButton(requestPayload, responseData, timestamp);
             }, 500);
 
@@ -126,197 +125,6 @@
     }
 
     /**
-     * Example usage: Uncomment to test background fetch
-     * This fetches data from Site A's API using the user's cookies
-     */
-    /*
-    async function exampleFetchData() {
-        try {
-            // Example: Fetch user profile data
-            const userData = await fetchViaBackground('https://site-a.com/api/user/profile');
-            console.log('[Data Bridge Content] Fetched user data:', userData);
-            
-            // Example: Post data to API
-            const postResult = await fetchViaBackground('https://site-a.com/api/data', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key: 'value' })
-            });
-            console.log('[Data Bridge Content] Posted data:', postResult);
-        } catch (error) {
-            console.error('[Data Bridge Content] Fetch error:', error);
-        }
-    }
-    
-    // Uncomment to run the example when page loads
-    // exampleFetchData();
-    */
-
-    /**
-     * Inject a test button for data extraction
-     * Only on the HoYoLAB community game records page
-     */
-    function injectTestButton() {
-        // Check if we're on the specific page
-        if (!window.location.href.includes('act.hoyolab.com/app/community-game-records-sea')) {
-            return;
-        }
-
-        // Don't inject if button already exists
-        if (document.getElementById('data-bridge-test-btn')) {
-            return;
-        }
-
-        // Create button
-        const button = document.createElement('button');
-        button.id = 'data-bridge-test-btn';
-        button.textContent = '🔍 Extract Data';
-        button.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 999999;
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-            transition: all 0.2s ease;
-        `;
-
-        // Hover effects
-        button.addEventListener('mouseenter', () => {
-            button.style.transform = 'translateY(-2px)';
-            button.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)';
-        });
-
-        button.addEventListener('mouseleave', () => {
-            button.style.transform = 'translateY(0)';
-            button.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
-        });
-
-        // Click handler
-        button.addEventListener('click', extractDataFromPage);
-
-        // Add to page
-        document.body.appendChild(button);
-        console.log('[Data Bridge] Test button injected');
-    }
-
-    /**
-     * Extract data from the HoYoLAB page
-     * This is a template - customize based on what data you need
-     */
-    async function extractDataFromPage() {
-        console.log('[Data Bridge] Extracting data from page...');
-
-        try {
-            // Example: Extract all text content from specific elements
-            const extractedData = {
-                url: window.location.href,
-                timestamp: new Date().toISOString(),
-                pageTitle: document.title,
-
-                // Example: Extract game data (customize these selectors)
-                gameRecords: extractGameRecords(),
-
-                // Example: Extract user info if visible
-                userInfo: extractUserInfo(),
-
-                // Add your custom extraction logic here
-                customData: extractCustomData()
-            };
-
-            console.log('[Data Bridge] Extracted data:', extractedData);
-
-            // Save to storage
-            await chrome.storage.local.set({
-                lastExtractedData: extractedData,
-                extractedAt: new Date().toISOString()
-            });
-
-            // Show success notification
-            showNotification('✓ Data extracted successfully!', 'success');
-
-            // Optional: Also save as a captured payload
-            const result = await chrome.storage.local.get('capturedPayloads');
-            const payloads = result.capturedPayloads || [];
-            payloads.push({
-                id: Date.now() + Math.random(),
-                payload: extractedData,
-                url: window.location.href,
-                method: 'EXTRACT',
-                timestamp: new Date().toISOString(),
-                capturedAt: new Date().toISOString()
-            });
-            await chrome.storage.local.set({
-                capturedPayloads: payloads.slice(-50)
-            });
-
-        } catch (error) {
-            console.error('[Data Bridge] Extraction failed:', error);
-            showNotification('✗ Failed to extract data', 'error');
-        }
-    }
-
-    /**
-     * Extract game records from the page
-     * Customize these selectors based on actual page structure
-     */
-    function extractGameRecords() {
-        // This is a placeholder - update selectors based on actual page
-        const records = [];
-
-        // Example: Find all game record cards
-        document.querySelectorAll('[class*="record"], [class*="game"]').forEach((element, index) => {
-            if (index < 10) { // Limit to first 10 to avoid too much data
-                records.push({
-                    text: element.textContent.trim().substring(0, 200),
-                    className: element.className
-                });
-            }
-        });
-
-        return records;
-    }
-
-    /**
-     * Extract user info from the page
-     */
-    function extractUserInfo() {
-        // Example selectors - customize based on actual page
-        return {
-            profileName: document.querySelector('[class*="profile"], [class*="user"]')?.textContent?.trim() || 'Not found',
-            // Add more user-specific selectors here
-        };
-    }
-
-    /**
-     * Extract custom data - customize this function
-     */
-    function extractCustomData() {
-        // Add your custom extraction logic here
-        // Example: Extract all images
-        const images = Array.from(document.querySelectorAll('img'))
-            .slice(0, 5)
-            .map(img => ({
-                src: img.src,
-                alt: img.alt
-            }));
-
-        return {
-            imageCount: document.querySelectorAll('img').length,
-            sampleImages: images,
-            // Add more custom fields here
-        };
-    }
-
-    /**
      * Show a notification on the page
      */
     function showNotification(message, type = 'success') {
@@ -345,28 +153,6 @@
             setTimeout(() => notification.remove(), 300);
         }, 3000);
     }
-
-    // Button injection is now triggered by detecting the character list API call
-    // See the HOYOLAB_CHARACTER_LIST_DETECTED message handler above
-
-    /*
-    // OLD: Inject buttons on page load
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            injectTestButton();
-            injectAPITestButton();
-        });
-    } else {
-        injectTestButton();
-        injectAPITestButton();
-    }
-
-    // Also try to inject after a short delay (in case DOM changes)
-    setTimeout(() => {
-        injectTestButton();
-        injectAPITestButton();
-    }, 1000);
-    */
 
     /**
      * Inject API test button for testing background fetch
@@ -479,7 +265,9 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    "x-rpc-language": "en-us",
+                    "x-rpc-lang": "en-us"
                 },
                 body: JSON.stringify(payload)
             });

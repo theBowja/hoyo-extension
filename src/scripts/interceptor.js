@@ -45,5 +45,5 @@
     return xhr;
   };
 
-  console.log('[Data Bridge] Fetch interceptor initialized');
+  console.log('[Data Bridge] Interceptor initialized');
 })();
