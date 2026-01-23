@@ -282,6 +282,16 @@
             const parsedData = parseGenshinData(data);
             console.log('[Data Bridge] Parsed Data:', parsedData);
 
+            // Format to GOOD
+            const formatterUrl = chrome.runtime.getURL('src/converters/formatters/good-formatter.js');
+            const { formatGOOD } = await import(formatterUrl);
+            const formattedData = formatGOOD(parsedData, {
+                removeManekin: true,
+                addTravelerElementToKey: true,
+                minCharacterLevel: 50
+            });
+            console.log('[Data Bridge] Formatted Data:', formattedData);
+
             // Save the response to storage
             await chrome.storage.local.set({
                 hoyolabParsedData: parsedData,

@@ -31,12 +31,12 @@ export interface GenshinCharacter {
     element: "Anemo" | "Geo" | "Dendro" | "Pyro" | "Hydro" | "Electro"; // For Traveler/Manekina
     friendship: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
     level: number;
-    ascension: 1 | 2 | 3 | 4 | 5 | 6; // Need to reverse calculate this...
+    ascension: 0 | 1 | 2 | 3 | 4 | 5 | 6; // THIS IS AN APPROXIMATION BASED ON LEVEL
     active_constellations: 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
     weapon: GenshinWeapon;
     artifacts: GenshinArtifact[];
-    constellations: GenshinConstellation[];
+    constellations: GenshinConstellation[]; // This is an empty array for Manekina
     outfits: GenshinOutfit[];
     talents: GenshinTalent[]; // Note: the third talent could be an Alternate Sprint instead of Elemental Burst
 }
@@ -47,7 +47,7 @@ export interface GenshinWeapon {
     icon_url: string;
 
     level: number;
-    ascension: 1 | 2 | 3 | 4 | 5 | 6;
+    ascension: 0 | 1 | 2 | 3 | 4 | 5 | 6;
     refinement: 0 | 1 | 2 | 3 | 4 | 5;
 }
 
@@ -90,6 +90,7 @@ export interface GenshinTalent {
 
     is_unlocked: boolean;
     is_enhanced: boolean; // Witch's Homework
+    is_alternate_sprint: boolean;
     level: number; // Includes boost from constellations
     base_level: number; // Base level before constellations
 }

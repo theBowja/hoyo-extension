@@ -52,7 +52,8 @@
     {
       "resources": [
         "src/scripts/interceptor.js",
-        "src/converters/parsers/genshin-parser.js"
+        "src/converters/parsers/genshin-parser.js",
+        "src/converters/formatters/good-formatter.js"
       ],
       "matches": [
         "https://act.hoyolab.com/*"

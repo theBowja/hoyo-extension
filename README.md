@@ -29,6 +29,9 @@ A cross-browser extension (Manifest V3) for Chrome, Edge, and Firefox that captu
 │   │   ├── popup.js       # Popup logic
 │   │   ├── viewer.html    # Full-page data viewer
 │   │   └── styles.css     # Popup styles
+│   ├── /converters        # Data converters
+│   │   ├── formatters    # Data formatters
+│   │   └── validators    # Data validators
 │   └── /icons             # Extension icons
 │       ├── icon-16.png    # 16x16 icon
 │       ├── icon-48.png    # 48x48 icon
