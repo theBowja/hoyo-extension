@@ -274,10 +274,18 @@
 
             console.log('[Data Bridge] Character Details Response:', data);
 
+            // Dynamically import the parser
+            const parserUrl = chrome.runtime.getURL('src/converters/parsers/genshin-parser.js');
+            const { parseGenshinData } = await import(parserUrl);
+
+            // Parse the data
+            const parsedData = parseGenshinData(data);
+            console.log('[Data Bridge] Parsed Data:', parsedData);
+
             // Save the response to storage
             await chrome.storage.local.set({
-                hoyolabCharacterDetails: data,
-                lastAPIFetchTime: new Date().toISOString()
+                hoyolabParsedData: parsedData,
+                lastAPIFetchTime: Date.now()
             });
 
             // Also add to captured payloads
@@ -288,13 +296,13 @@
                 payload: data,
                 url: url,
                 method: 'POST',
-                timestamp: new Date().toISOString(),
-                capturedAt: new Date().toISOString(),
+                timestamp: Date.now(),
+                capturedAt: Date.now(),
                 requestBody: payload,
                 characterCount: characterIds.length
             });
             await chrome.storage.local.set({
-                capturedPayloads: payloads.slice(-50)
+                capturedPayloads: payloads.slice(-10)
             });
 
             // Show success

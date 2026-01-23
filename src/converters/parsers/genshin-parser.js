@@ -5,33 +5,37 @@
  * into the extension's internal format.
  */
 
-// Import any necessary helpers here
-// import { someHelper } from '../scripts/utils.js';
-
 /**
  * Converts the raw Genshin Impact character details response
  * @param {Object} rawData - The raw JSON response from the API
- * @returns {Object} The normalized data in internal format
+ * @returns {import('../../types/genshin-v1').GenshinInternalData} The parsed data in internal format
  */
-export function convertGenshinData(rawData) {
-    // TODO: Implement conversion logic
-    console.log('[Genshin Converter] Converting raw data:', rawData);
+export function parseGenshinData(rawData) {
+    console.log('[Genshin Parser] Parsing raw data:', rawData);
 
     const internalFormat = {
+        version: 1,
         game: 'genshin',
-        timestamp: new Date().toISOString(),
-        userData: {
-            // Map user info here
+        timestamp: Date.now(),
+        user: {
+            uid: rawData.data.uid,
+            server: rawData.data.server,
+            // nickname: rawData.data.nickname,
+            // level: rawData.data.level
         },
-        characters: [
-            // Map characters list here
-        ],
-        stats: {
-            // Map summary stats here
-        }
+        characters: rawData.data.list.map(character => parseCharacter(character))
     };
 
     return internalFormat;
+}
+
+/**
+ * Converts a single character from the raw API response
+ * @param {Object} rawDataCharacter - The raw character data from the API
+ * @returns {import('../../types/genshin-v1').GenshinCharacter} The parsed character in internal format
+ */
+function parseCharacter(rawDataCharacter) {
+
 }
 
 /**
@@ -42,14 +46,4 @@ export function convertGenshinData(rawData) {
 export function isValidGenshinData(data) {
     // TODO: Implement validation logic
     return data && data.retcode === 0 && data.message === 'OK' && data.data;
-}
-
-// Example usage / test function
-export function testConversion(exampleData) {
-    if (isValidGenshinData(exampleData)) {
-        return convertGenshinData(exampleData);
-    } else {
-        console.error('[Genshin Converter] Invalid data format');
-        return null;
-    }
 }

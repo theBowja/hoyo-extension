@@ -51,7 +51,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "src/scripts/interceptor.js"
+        "src/scripts/interceptor.js",
+        "src/converters/parsers/genshin-parser.js"
       ],
       "matches": [
         "https://act.hoyolab.com/*"
