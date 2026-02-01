@@ -4,6 +4,14 @@
 (function () {
     'use strict';
 
+    function log(...args) {
+        console.log('[LeySync]', ...args);
+    }
+
+    function logError(...args) {
+        console.error('[LeySync]', ...args);
+    }
+
     /**
      * Inject the interceptor script into the main world
      */
@@ -17,7 +25,7 @@
         // Inject as early as possible
         (document.head || document.documentElement).appendChild(script);
 
-        console.log('[LeySync Content] Interceptor injected');
+        log('Interceptor injected');
     }
 
     /**
@@ -32,11 +40,11 @@
         if (event.data?.type === 'HOYOLAB_CHARACTER_LIST_DETECTED') {
             const { requestPayload, responseData, timestamp } = event.data;
 
-            console.log('[LeySync Content] HoYoLAB character list detected!');
-            console.log('[LeySync Content] Request:', requestPayload);
-            console.log('[LeySync Content] Response:', responseData);
+            log('HoYoLAB character list detected!');
+            log('Request:', requestPayload);
+            log('Response:', responseData);
 
-            console.log('[LeySync Content] Data received, injecting buttons...');
+            log('Data received, injecting buttons...');
 
             // Inject buttons passing the data directly
             setTimeout(() => {
@@ -76,7 +84,7 @@
                     lastCapture: captureEntry
                 });
 
-                console.log('[LeySync Content] Payload saved to storage:', captureEntry);
+                log('Payload saved to storage:', captureEntry);
 
                 // Update badge to show capture count
                 if (chrome.action && chrome.action.setBadgeText) {
@@ -84,7 +92,7 @@
                     chrome.action.setBadgeBackgroundColor({ color: '#667eea' });
                 }
             } catch (error) {
-                console.error('[LeySync Content] Error saving payload:', error);
+                logError('Error saving payload:', error);
             }
         }
     });
@@ -208,7 +216,7 @@
 
         // Add to page
         document.body.appendChild(button);
-        console.log('[LeySync] API Test button injected');
+        log('API Test button injected');
     }
 
     /**
@@ -218,7 +226,7 @@
      * @param {Object} responseData - The intercepted response data
      */
     async function testAPIFetch(requestPayload, responseData) {
-        console.log('[LeySync] Testing character detail API fetch...');
+        log('Testing character detail API fetch...');
 
         // Update button to show loading state
         const button = document.getElementById('leysync-api-test-btn');
@@ -228,7 +236,7 @@
         button.style.opacity = '0.7';
 
         try {
-            console.log('[LeySync] Received character list data:', requestPayload, responseData);
+            log('Received character list data:', requestPayload, responseData);
             if (!requestPayload || !responseData) {
                 throw new Error('No character list data provided.');
             }
@@ -243,9 +251,9 @@
             // Extract all character IDs
             const characterIds = characterListData.list.map(char => char.id);
 
-            console.log('[LeySync] Server:', server);
-            console.log('[LeySync] Role ID:', role_id);
-            console.log('[LeySync] Character IDs:', characterIds);
+            log('Server:', server);
+            log('Role ID:', role_id);
+            log('Character IDs:', characterIds);
 
             // API endpoint for character details
             const url = 'https://sg-public-api.hoyolab.com/event/game_record/genshin/api/character/detail';
@@ -257,8 +265,8 @@
                 character_ids: characterIds
             };
 
-            console.log('[LeySync] Fetching character details from:', url);
-            console.log('[LeySync] Payload:', payload);
+            log('Fetching character details from:', url);
+            log('Payload:', payload);
 
             // Make the request via background script (includes cookies)
             const data = await fetchViaBackground(url, {
@@ -272,7 +280,7 @@
                 body: JSON.stringify(payload)
             });
 
-            console.log('[LeySync] Character Details Response:', data);
+            log('Character Details Response:', data);
 
             // Dynamically import the parser
             const parserUrl = chrome.runtime.getURL('src/converters/parsers/genshin-parser.js');
@@ -280,7 +288,7 @@
 
             // Parse the data
             const parsedData = parseGenshinData(data);
-            console.log('[LeySync] Parsed Data:', parsedData);
+            log('Parsed Data:', parsedData);
 
             // Format to GOOD
             const formatterUrl = chrome.runtime.getURL('src/converters/formatters/good-formatter.js');
@@ -290,7 +298,7 @@
                 addTravelerElementToKey: true,
                 minCharacterLevel: 50
             });
-            console.log('[LeySync] Formatted Data:', formattedData);
+            log('Formatted Data:', formattedData);
 
             // Save the response to storage
             await chrome.storage.local.set({
@@ -324,7 +332,7 @@
             button.style.opacity = '1';
 
         } catch (error) {
-            console.error('[LeySync] API fetch failed:', error);
+            logError('API fetch failed:', error);
             showNotification(`✗ API fetch failed: ${error.message}`, 'error');
 
             // Reset button

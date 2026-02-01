@@ -6,6 +6,14 @@
 (function () {
     'use strict';
 
+    function log(...args) {
+        console.log('[LeySync]', ...args);
+    }
+
+    function logError(...args) {
+        console.error('[LeySync]', ...args);
+    }
+
     // Flag to track if button has been injected
     let buttonInjected = false;
 
@@ -60,7 +68,7 @@
      * Handles the import button click event
      */
     function handleImportClick() {
-        console.log('Injected button clicked');
+        log('Injected button clicked');
         // TODO: Implement actual HoyoLab import logic
     }
 
@@ -115,21 +123,21 @@
     function injectButton(dialog) {
         // Check if button already exists
         if (dialog.querySelector('[data-leysync-injected="true"]')) {
-            console.log('Import button already injected');
+            log('Import button already injected');
             return;
         }
 
         const buttonContainer = findButtonContainer(dialog);
 
         if (!buttonContainer) {
-            console.warn('Could not find button container in upload dialog');
+            log('Could not find button container in upload dialog');
             return;
         }
 
         const parentGrid = buttonContainer.parentElement;
 
         if (!parentGrid) {
-            console.warn('Could not find parent grid container');
+            log('Could not find parent grid container');
             return;
         }
 
@@ -156,7 +164,7 @@
         }
 
         buttonInjected = true;
-        console.log('Successfully injected "Import from HoyoLab" button');
+        log('Successfully injected "Import from HoyoLab" button');
     }
 
 
@@ -184,7 +192,7 @@
                 }
 
                 if (modalAdded) {
-                    console.log('Upload dialog detected', mutation);
+                    log('Upload dialog detected', mutation);
                     const dialog = findUploadDialog();
                     if (dialog) {
                         injectButton(dialog);
@@ -199,7 +207,7 @@
      * Initializes the content script
      */
     function init() {
-        console.log('Genshin Optimizer content script loaded');
+        log('Genshin Optimizer content script loaded');
 
         // Check if dialog is already present
         const existingDialog = findUploadDialog();
@@ -215,7 +223,7 @@
             subtree: true
         });
 
-        console.log('MutationObserver initialized');
+        log('MutationObserver initialized');
     }
 
     // Wait for DOM to be ready
