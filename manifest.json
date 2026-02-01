@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Data Bridge Extension",
+  "name": "HoYoBridge",
   "version": "1.0.0",
-  "description": "Captures JSON request payloads from Site A and bridges them to a static dashboard",
+  "description": "Universal data bridge for HoYoVerse games. Export Genshin Impact, ZZZ, and HSR data to tools like Genshin Optimizer.",
   "permissions": [
     "storage",
     "downloads"
@@ -10,7 +10,7 @@
   "host_permissions": [
     "https://act.hoyolab.com/*",
     "https://sg-public-api.hoyolab.com/*",
-    "https://my-static-dashboard.com/*"
+    "https://frzyc.github.io/*"
   ],
   "background": {
     "service_worker": "src/scripts/background.js"
@@ -40,10 +40,10 @@
     },
     {
       "matches": [
-        "https://my-static-dashboard.com/*"
+        "https://frzyc.github.io/genshin-optimizer/*"
       ],
       "js": [
-        "src/scripts/dashboard.js"
+        "src/scripts/genshin-optimizer.js"
       ],
       "run_at": "document_idle"
     }
