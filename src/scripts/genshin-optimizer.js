@@ -6,6 +6,8 @@
 (function () {
     'use strict';
 
+    // --- Utilities ---
+
     function log(...args) {
         console.log('[LeySync]', ...args);
     }
@@ -14,8 +16,176 @@
         console.error('[LeySync]', ...args);
     }
 
+    // --- State ---
+
     // Flag to track if button has been injected
     let buttonInjected = false;
+
+    // --- Initialization ---
+
+    // Wait for DOM to be ready and initialize
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    /**
+     * Initializes the content script
+     */
+    function init() {
+        log('Genshin Optimizer content script loaded');
+
+        // Check if dialog is already present
+        const existingDialog = findUploadDialog();
+        if (existingDialog) {
+            injectButton(existingDialog);
+        }
+
+        // Set up mutation observer to watch for dialog appearance
+        const observer = new MutationObserver(handleMutations);
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        log('MutationObserver initialized');
+    }
+
+    // --- Core Logic ---
+
+    /**
+     * Handles mutations and checks for the upload dialog
+     * @param {MutationRecord[]} mutations - Array of mutation records
+     */
+    function handleMutations(mutations) {
+        // Optimization: Only check for dialogs if we are on the settings page
+        if (!window.location.href.includes('/setting')) {
+            return;
+        }
+
+        for (const mutation of mutations) {
+            // Check for addition (modal opening) if we are NOT injected
+            if (!buttonInjected && mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                let modalAdded = false;
+                for (const node of mutation.addedNodes) {
+                    if (node.nodeType === Node.ELEMENT_NODE &&
+                        node.tagName === 'DIV' &&
+                        node.classList.contains('MuiModal-root')) {
+                        modalAdded = true;
+                        break;
+                    }
+                }
+
+                if (modalAdded) {
+                    log('Upload dialog detected', mutation);
+                    const dialog = findUploadDialog();
+                    if (dialog) {
+                        injectButton(dialog);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Injects the import button into the dialog
+     * @param {HTMLElement} dialog - The upload dialog element
+     */
+    function injectButton(dialog) {
+        // Check if button already exists
+        if (dialog.querySelector('[data-leysync-injected="true"]')) {
+            log('Import button already injected');
+            return;
+        }
+
+        const buttonContainer = findButtonContainer(dialog);
+
+        if (!buttonContainer) {
+            log('Could not find button container in upload dialog');
+            return;
+        }
+
+        const parentGrid = buttonContainer.parentElement;
+
+        if (!parentGrid) {
+            log('Could not find parent grid container');
+            return;
+        }
+
+        // Create a new full-width grid item for our button (to place it below, not beside)
+        const gridItem = document.createElement('div');
+        // Use MuiGrid-item class but make it span the full width
+        gridItem.className = 'MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 css-1wxaqej';
+
+        // Create wrapper label like the original
+        const label = document.createElement('label');
+        label.appendChild(createImportButton());
+
+        gridItem.appendChild(label);
+
+        // Find the last grid item in the parent grid and insert after it
+        const gridItems = parentGrid.querySelectorAll('.MuiGrid-item');
+        const lastGridItem = gridItems[gridItems.length - 1];
+
+        if (lastGridItem) {
+            lastGridItem.parentNode.insertBefore(gridItem, lastGridItem.nextSibling);
+        } else {
+            // Fallback: just append to the grid
+            parentGrid.appendChild(gridItem);
+        }
+
+        buttonInjected = true;
+        log('Successfully injected "Import from HoyoLab" button');
+    }
+
+    // --- Helpers ---
+
+    /**
+     * Finds the upload dialog popup in the DOM
+     * Uses text content to identify the dialog since class names may be randomized
+     * @returns {HTMLElement|null} The popup element or null if not found
+     */
+    function findUploadDialog() {
+        // Look for the modal/dialog container
+        const containers = document.querySelectorAll('[role="dialog"], .MuiContainer-root');
+
+        for (const container of containers) {
+            // Look for the file input for .json files (language-agnostic)
+            const fileInput = container.querySelector('input[type="file"][accept=".json"]');
+            // Also check for the textarea where users can paste data (language-agnostic)
+            const textarea = container.querySelector('textarea');
+
+            // Both should be present in the upload dialog
+            if (fileInput && textarea) {
+                return container;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Finds the container where we should inject the button
+     * @param {HTMLElement} dialog - The upload dialog element
+     * @returns {HTMLElement|null} The container element or null if not found
+     */
+    function findButtonContainer(dialog) {
+        // Find the label that contains the "Open" button
+        const labels = dialog.querySelectorAll('label[for="icon-button-file"]');
+
+        for (const label of labels) {
+            // Verify it contains a button with "Open" text
+            if (label.textContent.includes('Open')) {
+                // Get the parent container (should be a grid item)
+                return label.parentElement;
+            }
+        }
+
+        return null;
+    }
 
     /**
      * Creates the "Import from HoyoLab" button with matching styles
@@ -70,166 +240,5 @@
     function handleImportClick() {
         log('Injected button clicked');
         // TODO: Implement actual HoyoLab import logic
-    }
-
-    /**
-     * Finds the upload dialog popup in the DOM
-     * Uses text content to identify the dialog since class names may be randomized
-     * @returns {HTMLElement|null} The popup element or null if not found
-     */
-    function findUploadDialog() {
-        // Look for the modal/dialog container
-        const containers = document.querySelectorAll('[role="dialog"], .MuiContainer-root');
-
-        for (const container of containers) {
-            // Look for the file input for .json files (language-agnostic)
-            const fileInput = container.querySelector('input[type="file"][accept=".json"]');
-            // Also check for the textarea where users can paste data (language-agnostic)
-            const textarea = container.querySelector('textarea');
-
-            // Both should be present in the upload dialog
-            if (fileInput && textarea) {
-                return container;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Finds the container where we should inject the button
-     * @param {HTMLElement} dialog - The upload dialog element
-     * @returns {HTMLElement|null} The container element or null if not found
-     */
-    function findButtonContainer(dialog) {
-        // Find the label that contains the "Open" button
-        const labels = dialog.querySelectorAll('label[for="icon-button-file"]');
-
-        for (const label of labels) {
-            // Verify it contains a button with "Open" text
-            if (label.textContent.includes('Open')) {
-                // Get the parent container (should be a grid item)
-                return label.parentElement;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Injects the import button into the dialog
-     * @param {HTMLElement} dialog - The upload dialog element
-     */
-    function injectButton(dialog) {
-        // Check if button already exists
-        if (dialog.querySelector('[data-leysync-injected="true"]')) {
-            log('Import button already injected');
-            return;
-        }
-
-        const buttonContainer = findButtonContainer(dialog);
-
-        if (!buttonContainer) {
-            log('Could not find button container in upload dialog');
-            return;
-        }
-
-        const parentGrid = buttonContainer.parentElement;
-
-        if (!parentGrid) {
-            log('Could not find parent grid container');
-            return;
-        }
-
-        // Create a new full-width grid item for our button (to place it below, not beside)
-        const gridItem = document.createElement('div');
-        // Use MuiGrid-item class but make it span the full width
-        gridItem.className = 'MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 css-1wxaqej';
-
-        // Create wrapper label like the original
-        const label = document.createElement('label');
-        label.appendChild(createImportButton());
-
-        gridItem.appendChild(label);
-
-        // Find the last grid item in the parent grid and insert after it
-        const gridItems = parentGrid.querySelectorAll('.MuiGrid-item');
-        const lastGridItem = gridItems[gridItems.length - 1];
-
-        if (lastGridItem) {
-            lastGridItem.parentNode.insertBefore(gridItem, lastGridItem.nextSibling);
-        } else {
-            // Fallback: just append to the grid
-            parentGrid.appendChild(gridItem);
-        }
-
-        buttonInjected = true;
-        log('Successfully injected "Import from HoyoLab" button');
-    }
-
-
-    /**
-     * Handles mutations and checks for the upload dialog
-     * @param {MutationRecord[]} mutations - Array of mutation records
-     */
-    function handleMutations(mutations) {
-        // Optimization: Only check for dialogs if we are on the settings page
-        if (!window.location.href.includes('/setting')) {
-            return;
-        }
-
-        for (const mutation of mutations) {
-            // Check for addition (modal opening) if we are NOT injected
-            if (!buttonInjected && mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                let modalAdded = false;
-                for (const node of mutation.addedNodes) {
-                    if (node.nodeType === Node.ELEMENT_NODE &&
-                        node.tagName === 'DIV' &&
-                        node.classList.contains('MuiModal-root')) {
-                        modalAdded = true;
-                        break;
-                    }
-                }
-
-                if (modalAdded) {
-                    log('Upload dialog detected', mutation);
-                    const dialog = findUploadDialog();
-                    if (dialog) {
-                        injectButton(dialog);
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Initializes the content script
-     */
-    function init() {
-        log('Genshin Optimizer content script loaded');
-
-        // Check if dialog is already present
-        const existingDialog = findUploadDialog();
-        if (existingDialog) {
-            injectButton(existingDialog);
-        }
-
-        // Set up mutation observer to watch for dialog appearance
-        const observer = new MutationObserver(handleMutations);
-
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-
-        log('MutationObserver initialized');
-    }
-
-    // Wait for DOM to be ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
     }
 })();
