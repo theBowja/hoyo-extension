@@ -17,7 +17,7 @@
         // Inject as early as possible
         (document.head || document.documentElement).appendChild(script);
 
-        console.log('[Data Bridge Content] Interceptor injected');
+        console.log('[LeySync Content] Interceptor injected');
     }
 
     /**
@@ -32,11 +32,11 @@
         if (event.data?.type === 'HOYOLAB_CHARACTER_LIST_DETECTED') {
             const { requestPayload, responseData, timestamp } = event.data;
 
-            console.log('[Data Bridge Content] HoYoLAB character list detected!');
-            console.log('[Data Bridge Content] Request:', requestPayload);
-            console.log('[Data Bridge Content] Response:', responseData);
+            console.log('[LeySync Content] HoYoLAB character list detected!');
+            console.log('[LeySync Content] Request:', requestPayload);
+            console.log('[LeySync Content] Response:', responseData);
 
-            console.log('[Data Bridge Content] Data received, injecting buttons...');
+            console.log('[LeySync Content] Data received, injecting buttons...');
 
             // Inject buttons passing the data directly
             setTimeout(() => {
@@ -47,7 +47,7 @@
         }
 
         // Check if this is our capture message
-        if (event.data?.type === 'DATA_BRIDGE_CAPTURE') {
+        if (event.data?.type === 'LEYSYNC_DATA_CAPTURE') {
             const { payload, url, method, timestamp } = event.data;
 
             try {
@@ -76,7 +76,7 @@
                     lastCapture: captureEntry
                 });
 
-                console.log('[Data Bridge Content] Payload saved to storage:', captureEntry);
+                console.log('[LeySync Content] Payload saved to storage:', captureEntry);
 
                 // Update badge to show capture count
                 if (chrome.action && chrome.action.setBadgeText) {
@@ -84,7 +84,7 @@
                     chrome.action.setBadgeBackgroundColor({ color: '#667eea' });
                 }
             } catch (error) {
-                console.error('[Data Bridge Content] Error saving payload:', error);
+                console.error('[LeySync Content] Error saving payload:', error);
             }
         }
     });
@@ -166,13 +166,13 @@
         }
 
         // Don't inject if button already exists
-        if (document.getElementById('data-bridge-api-test-btn')) {
+        if (document.getElementById('leysync-api-test-btn')) {
             return;
         }
 
         // Create button
         const button = document.createElement('button');
-        button.id = 'data-bridge-api-test-btn';
+        button.id = 'leysync-api-test-btn';
         button.textContent = '🌐 Test API Fetch';
         button.style.cssText = `
             position: fixed;
@@ -208,7 +208,7 @@
 
         // Add to page
         document.body.appendChild(button);
-        console.log('[Data Bridge] API Test button injected');
+        console.log('[LeySync] API Test button injected');
     }
 
     /**
@@ -218,17 +218,17 @@
      * @param {Object} responseData - The intercepted response data
      */
     async function testAPIFetch(requestPayload, responseData) {
-        console.log('[Data Bridge] Testing character detail API fetch...');
+        console.log('[LeySync] Testing character detail API fetch...');
 
         // Update button to show loading state
-        const button = document.getElementById('data-bridge-api-test-btn');
+        const button = document.getElementById('leysync-api-test-btn');
         const originalText = button.textContent;
         button.textContent = '⏳ Fetching...';
         button.disabled = true;
         button.style.opacity = '0.7';
 
         try {
-            console.log('[Data Bridge] Received character list data:', requestPayload, responseData);
+            console.log('[LeySync] Received character list data:', requestPayload, responseData);
             if (!requestPayload || !responseData) {
                 throw new Error('No character list data provided.');
             }
@@ -243,9 +243,9 @@
             // Extract all character IDs
             const characterIds = characterListData.list.map(char => char.id);
 
-            console.log('[Data Bridge] Server:', server);
-            console.log('[Data Bridge] Role ID:', role_id);
-            console.log('[Data Bridge] Character IDs:', characterIds);
+            console.log('[LeySync] Server:', server);
+            console.log('[LeySync] Role ID:', role_id);
+            console.log('[LeySync] Character IDs:', characterIds);
 
             // API endpoint for character details
             const url = 'https://sg-public-api.hoyolab.com/event/game_record/genshin/api/character/detail';
@@ -257,8 +257,8 @@
                 character_ids: characterIds
             };
 
-            console.log('[Data Bridge] Fetching character details from:', url);
-            console.log('[Data Bridge] Payload:', payload);
+            console.log('[LeySync] Fetching character details from:', url);
+            console.log('[LeySync] Payload:', payload);
 
             // Make the request via background script (includes cookies)
             const data = await fetchViaBackground(url, {
@@ -272,7 +272,7 @@
                 body: JSON.stringify(payload)
             });
 
-            console.log('[Data Bridge] Character Details Response:', data);
+            console.log('[LeySync] Character Details Response:', data);
 
             // Dynamically import the parser
             const parserUrl = chrome.runtime.getURL('src/converters/parsers/genshin-parser.js');
@@ -280,7 +280,7 @@
 
             // Parse the data
             const parsedData = parseGenshinData(data);
-            console.log('[Data Bridge] Parsed Data:', parsedData);
+            console.log('[LeySync] Parsed Data:', parsedData);
 
             // Format to GOOD
             const formatterUrl = chrome.runtime.getURL('src/converters/formatters/good-formatter.js');
@@ -290,7 +290,7 @@
                 addTravelerElementToKey: true,
                 minCharacterLevel: 50
             });
-            console.log('[Data Bridge] Formatted Data:', formattedData);
+            console.log('[LeySync] Formatted Data:', formattedData);
 
             // Save the response to storage
             await chrome.storage.local.set({
@@ -324,7 +324,7 @@
             button.style.opacity = '1';
 
         } catch (error) {
-            console.error('[Data Bridge] API fetch failed:', error);
+            console.error('[LeySync] API fetch failed:', error);
             showNotification(`✗ API fetch failed: ${error.message}`, 'error');
 
             // Reset button

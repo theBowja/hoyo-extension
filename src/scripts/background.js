@@ -7,7 +7,7 @@
  * Initialize extension on install
  */
 chrome.runtime.onInstalled.addListener((details) => {
-    console.log('[Data Bridge Background] Extension installed:', details.reason);
+    console.log('Extension installed:', details.reason);
 
     // Initialize storage with empty array
     chrome.storage.local.set({
@@ -31,7 +31,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         // Update badge text
         chrome.action.setBadgeText({ text: String(count) });
 
-        console.log('[Data Bridge Background] Badge updated:', count);
+        console.log('Badge updated:', count);
     }
 });
 
@@ -40,14 +40,14 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
  */
 chrome.action.onClicked.addListener(() => {
     // This will be handled by the popup automatically
-    console.log('[Data Bridge Background] Extension icon clicked');
+    console.log('Extension icon clicked');
 });
 
 /**
  * Handle messages from content scripts
  */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('[Data Bridge Background] Received message:', request.action);
+    console.log('Received message:', request.action);
 
     // Handle fetch requests from content scripts
     if (request.action === 'FETCH_API') {
@@ -78,7 +78,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
  */
 async function handleBackgroundFetch(url, options = {}) {
     try {
-        console.log('[Data Bridge Background] Fetching:', url);
+        console.log('Fetching:', url);
 
         // Merge options with defaults
         const fetchOptions = {
@@ -98,11 +98,11 @@ async function handleBackgroundFetch(url, options = {}) {
         }
 
         const data = await response.json();
-        console.log('[Data Bridge Background] Fetch successful:', data);
+        console.log('Fetch successful:', data);
 
         return data;
     } catch (error) {
-        console.error('[Data Bridge Background] Fetch failed:', error);
+        console.error('Fetch failed:', error);
         throw error;
     }
 }

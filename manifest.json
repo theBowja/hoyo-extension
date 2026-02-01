@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "HoYoBridge",
+  "name": "LeySync",
   "version": "1.0.0",
   "description": "Universal data bridge for HoYoVerse games. Export Genshin Impact, ZZZ, and HSR data to tools like Genshin Optimizer.",
   "permissions": [

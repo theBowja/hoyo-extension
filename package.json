@@ -1,11 +1,11 @@
 {
-    "name": "hoyo-bridge",
+    "name": "leysync",
     "version": "1.0.0",
     "description": "Universal data bridge for HoYoVerse games. Export data to community tools.",
     "scripts": {
         "build": "npm run build:chrome && npm run build:firefox",
-        "build:chrome": "powershell -Command \"Compress-Archive -Path manifest.json,src,LICENSE,README.md -DestinationPath build/data-bridge-chrome.zip -Force\"",
-        "build:firefox": "powershell -Command \"Compress-Archive -Path manifest.json,src,LICENSE,README.md -DestinationPath build/data-bridge-firefox.zip -Force\"",
+        "build:chrome": "powershell -Command \"Compress-Archive -Path manifest.json,src,LICENSE,README.md -DestinationPath build/leysync-chrome.zip -Force\"",
+        "build:firefox": "powershell -Command \"Compress-Archive -Path manifest.json,src,LICENSE,README.md -DestinationPath build/leysync-firefox.zip -Force\"",
         "clean": "powershell -Command \"Remove-Item -Path build/* -Force -ErrorAction SilentlyContinue\"",
         "lint": "echo 'Linting not configured yet'",
         "test": "echo 'Tests not configured yet'"

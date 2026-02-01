@@ -2,25 +2,25 @@
 // This script retrieves captured data from chrome.storage.local and displays it
 
 (function () {
-    'use strict';
+  'use strict';
 
-    /**
-     * Format JSON data for display
-     * @param {Object} data - The data to format
-     * @returns {string} Formatted HTML string
-     */
-    function formatData(data) {
-        return `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-    }
+  /**
+   * Format JSON data for display
+   * @param {Object} data - The data to format
+   * @returns {string} Formatted HTML string
+   */
+  function formatData(data) {
+    return `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+  }
 
-    /**
-     * Create a styled card for a capture entry
-     * @param {Object} entry - The capture entry
-     * @param {number} index - The index of this entry
-     * @returns {string} HTML string
-     */
-    function createCaptureCard(entry, index) {
-        return `
+  /**
+   * Create a styled card for a capture entry
+   * @param {Object} entry - The capture entry
+   * @param {number} index - The index of this entry
+   * @returns {string} HTML string
+   */
+  function createCaptureCard(entry, index) {
+    return `
       <div class="capture-card" data-id="${entry.id}">
         <div class="capture-header">
           <span class="capture-number">#${index + 1}</span>
@@ -33,19 +33,19 @@
         </div>
       </div>
     `;
+  }
+
+  /**
+   * Inject CSS for the dashboard
+   */
+  function injectStyles() {
+    if (document.getElementById('leysync-dashboard-styles')) {
+      return;
     }
 
-    /**
-     * Inject CSS for the dashboard
-     */
-    function injectStyles() {
-        if (document.getElementById('data-bridge-dashboard-styles')) {
-            return;
-        }
-
-        const style = document.createElement('style');
-        style.id = 'data-bridge-dashboard-styles';
-        style.textContent = `
+    const style = document.createElement('style');
+    style.id = 'leysync-dashboard-styles';
+    style.textContent = `
       .data-view-container {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         max-width: 1200px;
@@ -184,40 +184,40 @@
         transform: translateY(0);
       }
     `;
-        document.head.appendChild(style);
+    document.head.appendChild(style);
+  }
+
+  /**
+   * Load and display captured data
+   */
+  async function loadData() {
+    const dataView = document.getElementById('data-view');
+
+    if (!dataView) {
+      console.warn('[LeySync Dashboard] Element with ID "data-view" not found');
+      return;
     }
 
-    /**
-     * Load and display captured data
-     */
-    async function loadData() {
-        const dataView = document.getElementById('data-view');
+    try {
+      // Retrieve all captured payloads from storage
+      const result = await chrome.storage.local.get(['capturedPayloads', 'lastCapture']);
+      const payloads = result.capturedPayloads || [];
 
-        if (!dataView) {
-            console.warn('[Data Bridge Dashboard] Element with ID "data-view" not found');
-            return;
-        }
+      // Inject styles
+      injectStyles();
 
-        try {
-            // Retrieve all captured payloads from storage
-            const result = await chrome.storage.local.get(['capturedPayloads', 'lastCapture']);
-            const payloads = result.capturedPayloads || [];
-
-            // Inject styles
-            injectStyles();
-
-            // Build the HTML
-            let html = `
+      // Build the HTML
+      let html = `
         <div class="data-view-container">
           <div class="data-view-header">
-            <h2>📊 Captured Data Bridge Payloads</h2>
+            <h2>📊 Captured LeySync Payloads</h2>
             <p>Total captures: ${payloads.length} | Last update: ${new Date().toLocaleString()}</p>
           </div>
           <button class="refresh-button" id="refresh-data">🔄 Refresh Data</button>
       `;
 
-            if (payloads.length === 0) {
-                html += `
+      if (payloads.length === 0) {
+        html += `
           <div class="no-data-message">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
@@ -227,51 +227,51 @@
             <p>Visit Site A and perform actions that trigger the target API calls.</p>
           </div>
         `;
-            } else {
-                // Reverse to show newest first
-                const reversedPayloads = [...payloads].reverse();
-                reversedPayloads.forEach((entry, index) => {
-                    html += createCaptureCard(entry, payloads.length - index - 1);
-                });
-            }
+      } else {
+        // Reverse to show newest first
+        const reversedPayloads = [...payloads].reverse();
+        reversedPayloads.forEach((entry, index) => {
+          html += createCaptureCard(entry, payloads.length - index - 1);
+        });
+      }
 
-            html += '</div>';
+      html += '</div>';
 
-            // Update the DOM
-            dataView.innerHTML = html;
+      // Update the DOM
+      dataView.innerHTML = html;
 
-            // Add event listener to refresh button
-            const refreshButton = document.getElementById('refresh-data');
-            if (refreshButton) {
-                refreshButton.addEventListener('click', loadData);
-            }
+      // Add event listener to refresh button
+      const refreshButton = document.getElementById('refresh-data');
+      if (refreshButton) {
+        refreshButton.addEventListener('click', loadData);
+      }
 
-            console.log('[Data Bridge Dashboard] Loaded', payloads.length, 'captured payloads');
-        } catch (error) {
-            console.error('[Data Bridge Dashboard] Error loading data:', error);
-            dataView.innerHTML = `
+      console.log('[LeySync Dashboard] Loaded', payloads.length, 'captured payloads');
+    } catch (error) {
+      console.error('[LeySync Dashboard] Error loading data:', error);
+      dataView.innerHTML = `
         <div class="no-data-message">
           <h3>Error Loading Data</h3>
           <p>${error.message}</p>
         </div>
       `;
-        }
     }
+  }
 
-    /**
-     * Listen for storage changes and auto-update
-     */
-    chrome.storage.onChanged.addListener((changes, areaName) => {
-        if (areaName === 'local' && changes.capturedPayloads) {
-            console.log('[Data Bridge Dashboard] Storage updated, refreshing...');
-            loadData();
-        }
-    });
-
-    // Load data when the page loads
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadData);
-    } else {
-        loadData();
+  /**
+   * Listen for storage changes and auto-update
+   */
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.capturedPayloads) {
+      console.log('[LeySync Dashboard] Storage updated, refreshing...');
+      loadData();
     }
+  });
+
+  // Load data when the page loads
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadData);
+  } else {
+    loadData();
+  }
 })();

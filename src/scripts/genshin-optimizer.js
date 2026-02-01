@@ -19,7 +19,7 @@
         button.setAttribute('tabindex', '0');
         button.setAttribute('role', 'button');
         button.setAttribute('type', 'button');
-        button.setAttribute('data-hoyobridge-injected', 'true');
+        button.setAttribute('data-leysync-injected', 'true');
 
         // Create button icon
         const iconSpan = document.createElement('span');
@@ -114,7 +114,7 @@
      */
     function injectButton(dialog) {
         // Check if button already exists
-        if (dialog.querySelector('[data-hoyobridge-injected="true"]')) {
+        if (dialog.querySelector('[data-leysync-injected="true"]')) {
             console.log('Import button already injected');
             return;
         }

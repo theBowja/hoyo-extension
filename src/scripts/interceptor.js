@@ -45,5 +45,5 @@
     return xhr;
   };
 
-  console.log('[Data Bridge] Interceptor initialized');
+  console.log('[LeySync] Interceptor initialized');
 })();
