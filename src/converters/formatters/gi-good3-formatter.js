@@ -45,7 +45,7 @@ export function formatGOOD(internalPv1, {
     return {
         format: "GOOD",
         version: 3,
-        source: "HoYoLAB Extension",
+        source: "LeySync Extension",
         characters,
         artifacts,
         weapons

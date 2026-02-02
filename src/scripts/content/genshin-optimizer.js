@@ -152,6 +152,11 @@ function findUploadDialog() {
     return null;
 }
 
+function findUploadDialogTextarea() {
+    const dialog = findUploadDialog();
+    return dialog ? dialog.querySelector('textarea') : null;
+}
+
 /**
  * Creates the "Import from HoyoLab" button with matching styles
  * @returns {HTMLElement} The button element
@@ -238,24 +243,23 @@ async function handleImportClick() {
     log('Injected button clicked');
 
     const response = await getCharacterData('os_usa', '605594547');
-    console.log(response);
-    const data = parseGOOD3Data(response);
-    console.log(data);
-    return data;
+    log('Response:', response);
+    const data = parseGOOD3Data(response, {
+        removeManekin: true,
+        addTravelerElementToKey: true,
+        // minCharacterLevel: 50
+    });
+    log('Parsed data:', data);
 
-    // Send message to the found tab
-    // chrome.runtime.sendMessage({
-    //     action: 'FETCH_GENSHIN',
-    // }, (msgResponse) => {
-    //     if (chrome.runtime.lastError) {
-    //         logError('Error sending message:', chrome.runtime.lastError);
-    //         alert('Failed to send message to HoYoLab tab.');
-    //     } else if (msgResponse && msgResponse.success) {
-    //         log('Message sent successfully', msgResponse.response);
-    //         alert('Request sent to HoYoLab tab!');
-    //     } else {
-    //         logError('Message sending failed', msgResponse);
-    //         alert('Failed to send request to HoYoLab tab.');
-    //     }
-    // });
+    // Inject into textarea
+    const textarea = findUploadDialogTextarea();
+    if (textarea) {
+        textarea.value = JSON.stringify(data);
+
+        // Trigger input event to notify the UI
+        const event = new Event('input', { bubbles: true });
+        textarea.dispatchEvent(event);
+    }
+
+    return data;
 }

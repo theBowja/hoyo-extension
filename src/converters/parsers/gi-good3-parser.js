@@ -1,7 +1,7 @@
 import { parseGenshinData } from './gi-leysync-parser.js';
 import { formatGOOD } from '../formatters/gi-good3-formatter.js';
 
-export function parseGOOD3Data(rawData) {
+export function parseGOOD3Data(rawData, options) {
     const internalData = parseGenshinData(rawData);
-    return formatGOOD(internalData);
+    return formatGOOD(internalData, options);
 }

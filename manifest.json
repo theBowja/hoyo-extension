@@ -55,11 +55,22 @@
         "src/converters/parsers/gi-leysync-parser.js",
         "src/converters/formatters/gi-good3-formatter.js",
         "src/scripts/content/hoyolab-genshin.js",
-        "src/scripts/content/genshin-optimizer.js",
         "src/utils/logger.js"
       ],
       "matches": [
         "https://act.hoyolab.com/*"
+      ]
+    },
+    {
+      "resources": [
+        "src/converters/parsers/gi-good3-parser.js",
+        "src/converters/parsers/gi-leysync-parser.js",
+        "src/converters/formatters/gi-good3-formatter.js",
+        "src/scripts/content/genshin-optimizer.js",
+        "src/utils/logger.js"
+      ],
+      "matches": [
+        "https://frzyc.github.io/*"
       ]
     }
   ]

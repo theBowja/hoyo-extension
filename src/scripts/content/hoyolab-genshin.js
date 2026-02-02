@@ -333,10 +333,6 @@ async function testAPIFetch(requestPayload, responseData) {
 
         log('Character Details Response:', data);
 
-        // Dynamically import the parser
-        // const parserUrl = chrome.runtime.getURL('src/converters/parsers/leysync-parser.js');
-        // const { parseGenshinData } = await import(parserUrl);
-
         // Parse the data
         const parsedData = parseGenshinData(data);
         log('Parsed Data:', parsedData);
