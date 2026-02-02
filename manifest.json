@@ -42,7 +42,7 @@
         "https://frzyc.github.io/genshin-optimizer/*"
       ],
       "js": [
-        "src/scripts/content/genshin-optimizer.js"
+        "src/scripts/loader.js"
       ],
       "run_at": "document_idle"
     }
@@ -51,11 +51,12 @@
     {
       "resources": [
         "src/scripts/interceptor.js",
-        "src/converters/parsers/leysync-parser.js",
-        "src/converters/formatters/good3-formatter.js",
+        "src/converters/parsers/gi-good3-parser.js",
+        "src/converters/parsers/gi-leysync-parser.js",
+        "src/converters/formatters/gi-good3-formatter.js",
         "src/scripts/content/hoyolab-genshin.js",
         "src/scripts/content/genshin-optimizer.js",
-        "src/scripts/logger.js"
+        "src/utils/logger.js"
       ],
       "matches": [
         "https://act.hoyolab.com/*"

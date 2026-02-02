@@ -1,6 +1,4 @@
-function log(...args) {
-    console.log('[LeySync]', ...args);
-}
+import { log } from '../../utils/logger.js';
 
 /**
  * Genshin Impact Data Converter
@@ -12,7 +10,7 @@ function log(...args) {
 /**
  * Converts the raw Genshin Impact character details response
  * @param {Object} rawData - The raw JSON response from the API
- * @returns {import('../../types/genshin-v1').GenshinInternalData} The parsed data in internal format
+ * @returns {import('../../types/genshin-v1.js').GenshinInternalData} The parsed data in internal format
  */
 export function parseGenshinData(rawData) {
     log('Parsing raw data:', rawData);
@@ -36,7 +34,7 @@ export function parseGenshinData(rawData) {
 /**
  * Converts a single character from the raw API response
  * @param {Object} rawDataCharacter - The raw character data from the API
- * @returns {import('../../types/genshin-v1').GenshinCharacter} The parsed character in internal format
+ * @returns {import('../../types/genshin-v1.js').GenshinCharacter} The parsed character in internal format
  */
 function parseCharacter(rawDataCharacter) {
     const base = rawDataCharacter.base;
@@ -68,7 +66,7 @@ function parseCharacter(rawDataCharacter) {
 /**
  * Parses weapon data
  * @param {Object} weaponData 
- * @returns {import('../../types/genshin-v1').GenshinWeapon}
+ * @returns {import('../../types/genshin-v1.js').GenshinWeapon}
  */
 function parseWeapon(weaponData) {
     return {
@@ -84,7 +82,7 @@ function parseWeapon(weaponData) {
 /**
  * Parses artifact data
  * @param {Object} artifactData 
- * @returns {import('../../types/genshin-v1').GenshinArtifact}
+ * @returns {import('../../types/genshin-v1.js').GenshinArtifact}
  */
 function parseArtifact(artifactData) {
     return {
@@ -107,7 +105,7 @@ function parseArtifact(artifactData) {
 /**
  * Parses constellation data
  * @param {Object} constellationData 
- * @returns {import('../../types/genshin-v1').GenshinConstellation}
+ * @returns {import('../../types/genshin-v1.js').GenshinConstellation}
  */
 function parseConstellation(constellationData) {
     return {
@@ -122,7 +120,7 @@ function parseConstellation(constellationData) {
 /**
  * Parses outfit data
  * @param {Object} outfitData 
- * @returns {import('../../types/genshin-v1').GenshinOutfit}
+ * @returns {import('../../types/genshin-v1.js').GenshinOutfit}
  */
 function parseOutfit(outfitData) {
     return {
@@ -136,7 +134,7 @@ function parseOutfit(outfitData) {
  * Parses talent/skill data
  * @param {Object} talentData 
  * @param {Array} constellations
- * @returns {import('../../types/genshin-v1').GenshinTalent}
+ * @returns {import('../../types/genshin-v1.js').GenshinTalent}
  */
 function parseTalent(talentData, constellations) {
     // Check if any active constellation boosts this talent

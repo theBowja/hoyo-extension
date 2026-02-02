@@ -1,8 +1,8 @@
 'use strict';
 
-import { parseGenshinData } from '../../converters/parsers/leysync-parser.js';
-import { formatGOOD } from '../../converters/formatters/good3-formatter.js';
-import { log, logError } from '../logger.js';
+import { parseGenshinData } from '../../converters/parsers/gi-leysync-parser.js';
+import { formatGOOD } from '../../converters/formatters/gi-good3-formatter.js';
+import { log, logError } from '../../utils/logger.js';
 
 /**
  * Inject the interceptor script into the main world

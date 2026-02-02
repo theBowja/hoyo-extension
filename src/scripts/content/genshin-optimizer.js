@@ -5,15 +5,8 @@
 
 'use strict';
 
-// --- Utilities ---
-
-function log(...args) {
-    console.log('[LeySync]', ...args);
-}
-
-function logError(...args) {
-    console.error('[LeySync]', ...args);
-}
+import { log, logError } from '../../utils/logger.js';
+import { parseGOOD3Data } from '../../converters/parsers/gi-good3-parser.js';
 
 // --- State ---
 
@@ -246,7 +239,9 @@ async function handleImportClick() {
 
     const response = await getCharacterData('os_usa', '605594547');
     console.log(response);
-    return response;
+    const data = parseGOOD3Data(response);
+    console.log(data);
+    return data;
 
     // Send message to the found tab
     // chrome.runtime.sendMessage({
