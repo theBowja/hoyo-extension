@@ -1,4 +1,4 @@
-import { parseGenshinData } from '../src/converters/parsers/genshin-parser.js';
+import { parseGenshinData } from '../src/converters/parsers/leysync-parser.js';
 import { EXAMPLE_GENSHIN_RESPONSE } from './fixtures/genshin-response.js';
 
 console.log('Testing Genshin Parser...');

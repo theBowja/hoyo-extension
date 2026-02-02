@@ -1,3 +1,7 @@
+function log(...args) {
+    console.log('[LeySync]', ...args);
+}
+
 /**
  * Genshin Impact Data Converter
  * 
@@ -11,15 +15,15 @@
  * @returns {import('../../types/genshin-v1').GenshinInternalData} The parsed data in internal format
  */
 export function parseGenshinData(rawData) {
-    console.log('[Genshin Parser] Parsing raw data:', rawData);
+    log('Parsing raw data:', rawData);
 
     const internalFormat = {
         version: 1,
         game: 'genshin',
         timestamp: Date.now(),
         user: {
-            uid: rawData.data.uid,
-            server: rawData.data.server,
+            // uid: rawData.data.uid,
+            // server: rawData.data.server,
             // nickname: rawData.data.nickname,
             // level: rawData.data.level
         },

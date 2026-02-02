@@ -4,8 +4,7 @@
   "version": "1.0.0",
   "description": "Universal data bridge for HoYoVerse games. Export Genshin Impact, ZZZ, and HSR data to tools like Genshin Optimizer.",
   "permissions": [
-    "storage",
-    "downloads"
+    "storage"
   ],
   "host_permissions": [
     "https://act.hoyolab.com/*",
@@ -34,7 +33,7 @@
         "https://act.hoyolab.com/app/community-game-records-sea/*"
       ],
       "js": [
-        "src/scripts/content.js"
+        "src/scripts/loader.js"
       ],
       "run_at": "document_start"
     },
@@ -43,7 +42,7 @@
         "https://frzyc.github.io/genshin-optimizer/*"
       ],
       "js": [
-        "src/scripts/genshin-optimizer.js"
+        "src/scripts/content/genshin-optimizer.js"
       ],
       "run_at": "document_idle"
     }
@@ -52,8 +51,11 @@
     {
       "resources": [
         "src/scripts/interceptor.js",
-        "src/converters/parsers/genshin-parser.js",
-        "src/converters/formatters/good-formatter.js"
+        "src/converters/parsers/leysync-parser.js",
+        "src/converters/formatters/good3-formatter.js",
+        "src/scripts/content/hoyolab-genshin.js",
+        "src/scripts/content/genshin-optimizer.js",
+        "src/scripts/logger.js"
       ],
       "matches": [
         "https://act.hoyolab.com/*"

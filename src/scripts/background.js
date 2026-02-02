@@ -49,60 +49,82 @@ chrome.action.onClicked.addListener(() => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Received message:', request.action);
 
-    // Handle fetch requests from content scripts
-    if (request.action === 'FETCH_API') {
-        handleBackgroundFetch(request.url, request.options)
+    if (request.action === 'GET_GENSHIN_CHARACTER_LIST') {
+        getGenshinCharacterList(request)
             .then(response => {
                 sendResponse({ success: true, data: response });
             })
             .catch(error => {
                 sendResponse({ success: false, error: error.message });
             });
-
-        // Return true to indicate we will send a response asynchronously
         return true;
     }
 
-    // Handle other message types here
+    if (request.action === 'GET_GENSHIN_CHARACTER_DATA') {
+        getGenshinCharacterData(request)
+            .then(response => {
+                sendResponse({ success: true, data: response });
+            })
+            .catch(error => {
+                sendResponse({ success: false, error: error.message });
+            });
+        return true;
+    }
+
     return false;
 });
 
-/**
- * Fetch data from Site A's API with user credentials
- * This runs in the background script context, allowing it to make
- * cross-origin requests with the user's cookies
- * 
- * @param {string} url - The API URL to fetch from
- * @param {Object} options - Additional fetch options to merge
- * @returns {Promise<Object>} The parsed JSON response
- */
-async function handleBackgroundFetch(url, options = {}) {
-    try {
-        console.log('Fetching:', url);
+async function resolveGenshinUser(request) {
+    if (request.server && request.roleId) return;
 
-        // Merge options with defaults
-        const fetchOptions = {
-            method: 'GET',
-            credentials: 'include', // Include cookies for authentication
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            },
-            ...options
-        };
+    // Retrieve server and roleId from somewhere
+}
 
-        const response = await fetch(url, fetchOptions);
+async function getGenshinCharacterList(request) {
+    const url = 'https://sg-public-api.hoyolab.com/event/game_record/genshin/api/character/list';
+    await resolveGenshinUser(request);
+    const payload = {
+        server: request.server,
+        role_id: request.roleId
+    };
+    const fetchOptions = {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            "x-rpc-language": "en-us",
+            "x-rpc-lang": "en-us"
+        },
+        body: JSON.stringify(payload)
+    };
+    const response = await fetch(url, fetchOptions);
+    return await response.json();
+}
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        console.log('Fetch successful:', data);
-
-        return data;
-    } catch (error) {
-        console.error('Fetch failed:', error);
-        throw error;
+async function getGenshinCharacterData(request) {
+    const url = 'https://sg-public-api.hoyolab.com/event/game_record/genshin/api/character/detail';
+    await resolveGenshinUser(request);
+    if (!request.characterIds) {
+        const data = await getGenshinCharacterList(request);
+        request.characterIds = data.data.list.map(character => character.id);
     }
+    const payload = {
+        server: request.server,
+        role_id: request.roleId,
+        character_ids: request.characterIds
+    };
+    const fetchOptions = {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            "x-rpc-language": "en-us",
+            "x-rpc-lang": "en-us"
+        },
+        body: JSON.stringify(payload)
+    };
+    const response = await fetch(url, fetchOptions);
+    return await response.json();
 }
