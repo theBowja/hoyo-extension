@@ -36,6 +36,23 @@ window.addEventListener('message', async (event) => {
         log('Request:', requestPayload);
         log('Response:', responseData);
 
+        // Store server and roleId for use in other content scripts
+        if (requestPayload && requestPayload.server && requestPayload.role_id) {
+            chrome.storage.local.set({
+                genshinServer: requestPayload.server,
+                genshinRoleId: requestPayload.role_id
+            }).then(() => {
+                log('Stored server and roleId:', requestPayload.server, requestPayload.role_id);
+
+                // Broadcast login complete to all tabs
+                chrome.runtime.sendMessage({
+                    action: 'GENSHIN_LOGIN_COMPLETE',
+                    server: requestPayload.server,
+                    roleId: requestPayload.role_id
+                });
+            });
+        }
+
         log('Data received, injecting buttons...');
 
         // Inject buttons passing the data directly

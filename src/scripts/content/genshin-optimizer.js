@@ -13,6 +13,9 @@ import { parseGOOD3Data } from '../../converters/parsers/gi-good3-parser.js';
 // Flag to track if button has been injected
 let buttonInjected = false;
 
+// Store pending request timestamp for retry after login
+let pendingRequest = null;
+
 // --- Initialization ---
 
 // Wait for DOM to be ready and initialize
@@ -40,6 +43,26 @@ function init() {
     observer.observe(document.body, {
         childList: true,
         subtree: true
+    });
+
+    // Listen for login complete broadcasts
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.action === 'GENSHIN_LOGIN_COMPLETE') {
+            log('Login complete detected, checking pending request');
+            if (pendingRequest) {
+                const now = Date.now();
+                const elapsed = now - pendingRequest;
+                const fiveMinutes = 5 * 60 * 1000;
+
+                if (elapsed < fiveMinutes) {
+                    log('Retrying pending request (elapsed: ' + Math.round(elapsed / 1000) + 's)');
+                    handleImportClick();
+                } else {
+                    log('Pending request expired (elapsed: ' + Math.round(elapsed / 1000) + 's)');
+                }
+                pendingRequest = null;
+            }
+        }
     });
 
     log('MutationObserver initialized');
@@ -216,6 +239,7 @@ async function getCharacterData(server, roleId, characterIds) {
         chrome.runtime.sendMessage(
             {
                 action: 'GET_GENSHIN_CHARACTER_DATA',
+                autoLogin: true,
                 server: server,
                 roleId: roleId,
                 characterIds: characterIds
@@ -228,7 +252,10 @@ async function getCharacterData(server, roleId, characterIds) {
 
                 if (response && response.success) {
                     resolve(response.data);
+                } else if (response && response.needsLogin) {
+                    resolve(response);
                 } else {
+                    log('Error:', response);
                     reject(new Error(response?.error || 'Unknown error'));
                 }
             }
@@ -242,7 +269,14 @@ async function getCharacterData(server, roleId, characterIds) {
 async function handleImportClick() {
     log('Injected button clicked');
 
-    const response = await getCharacterData('os_usa', '605594547');
+    const response = await getCharacterData();
+    if (response.needsLogin) {
+        log('Please login to HoyoLab - waiting for login to complete');
+        // Store timestamp for retry after login (expires after 5 minutes)
+        pendingRequest = Date.now();
+        return;
+    }
+
     log('Response:', response);
     const data = parseGOOD3Data(response, {
         removeManekin: true,
@@ -259,7 +293,37 @@ async function handleImportClick() {
         // Trigger input event to notify the UI
         const event = new Event('input', { bubbles: true });
         textarea.dispatchEvent(event);
+
+        // Uncheck the second checkbox (Delete items not in import)
+        uncheckDeleteItemsCheckbox();
     }
 
     return data;
+}
+
+/**
+ * Finds and unchecks the second checkbox button in the dialog
+ */
+function uncheckDeleteItemsCheckbox() {
+    const dialog = findUploadDialog();
+    if (!dialog) {
+        log('Dialog not found, cannot uncheck checkbox');
+        return;
+    }
+
+    // Find all buttons with CheckBoxIcon (checked checkboxes)
+    const checkboxButtons = dialog.querySelectorAll('button svg[data-testid="CheckBoxIcon"]');
+
+    if (checkboxButtons.length >= 2) {
+        // Click the second checkbox button (index 1)
+        const secondCheckbox = checkboxButtons[1].closest('button');
+        if (secondCheckbox) {
+            log('Clicking second checkbox to uncheck "Delete items not in import"');
+            secondCheckbox.click();
+        } else {
+            log('Could not find button element for second checkbox');
+        }
+    } else {
+        log('Less than 2 checkboxes found, count:', checkboxButtons.length);
+    }
 }

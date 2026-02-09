@@ -55,7 +55,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 sendResponse({ success: true, data: response });
             })
             .catch(error => {
-                sendResponse({ success: false, error: error.message });
+                sendResponse({
+                    success: false,
+                    error: error.message,
+                    needsLogin: error.needsLogin || false
+                });
             });
         return true;
     }
@@ -66,7 +70,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 sendResponse({ success: true, data: response });
             })
             .catch(error => {
-                sendResponse({ success: false, error: error.message });
+                sendResponse({
+                    success: false,
+                    error: error.message,
+                    needsLogin: error.needsLogin || false
+                });
             });
         return true;
     }
@@ -77,7 +85,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 async function resolveGenshinUser(request) {
     if (request.server && request.roleId) return;
 
-    // Retrieve server and roleId from somewhere
+    // Retrieve server and roleId from storage
+    const result = await chrome.storage.local.get(['genshinServer', 'genshinRoleId']);
+    if (result.genshinServer && result.genshinRoleId) {
+        request.server = result.genshinServer;
+        request.roleId = result.genshinRoleId;
+        console.log('Retrieved from storage - server:', request.server, 'roleId:', request.roleId);
+    } else if (request.autoLogin) {
+        console.log('No server or roleId found, opening login popup');
+        await openHoyoLabLoginPopup();
+    } else {
+        throwLoginError();
+    }
 }
 
 async function getGenshinCharacterList(request) {
@@ -99,7 +118,7 @@ async function getGenshinCharacterList(request) {
         body: JSON.stringify(payload)
     };
     const response = await fetch(url, fetchOptions);
-    return await response.json();
+    return await getJsonResponseData(response, request.autoLogin, 'getGenshinCharacterList');
 }
 
 async function getGenshinCharacterData(request) {
@@ -107,7 +126,7 @@ async function getGenshinCharacterData(request) {
     await resolveGenshinUser(request);
     if (!request.characterIds) {
         const data = await getGenshinCharacterList(request);
-        request.characterIds = data.data.list.map(character => character.id);
+        request.characterIds = data.list.map(character => character.id);
     }
     const payload = {
         server: request.server,
@@ -126,5 +145,37 @@ async function getGenshinCharacterData(request) {
         body: JSON.stringify(payload)
     };
     const response = await fetch(url, fetchOptions);
-    return await response.json();
+    return await getJsonResponseData(response, request.autoLogin, 'getGenshinCharacterData');
+}
+
+async function openHoyoLabLoginPopup() {
+    const loginUrl = 'https://act.hoyolab.com/app/community-game-records-sea/index.html';
+    console.log('Opening HoyoLab login popup');
+    await chrome.windows.create({
+        url: loginUrl,
+        type: 'popup',
+        width: 800,
+        height: 600
+    });
+}
+
+async function getJsonResponseData(response, autoLogin, functionName) {
+    const data = await response.json();
+    console.log(functionName, 'response:', data);
+    if (data.retcode === 10001) {
+        if (autoLogin) {
+            await openHoyoLabLoginPopup();
+        }
+        throwLoginError();
+    }
+    if (data.retcode !== 0) {
+        throw new Error(data.message);
+    }
+    return data.data;
+}
+
+function throwLoginError() {
+    const error = new Error('Please login to HoyoLab');
+    error.needsLogin = true;
+    throw error;
 }

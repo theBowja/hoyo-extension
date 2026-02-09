@@ -25,7 +25,7 @@ export function parseGenshinData(rawData) {
             // nickname: rawData.data.nickname,
             // level: rawData.data.level
         },
-        characters: rawData.data.list.map(character => parseCharacter(character))
+        characters: rawData.list.map(character => parseCharacter(character))
     };
 
     return internalFormat;
