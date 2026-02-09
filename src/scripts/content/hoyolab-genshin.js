@@ -44,6 +44,22 @@ window.addEventListener('message', async (event) => {
             }).then(() => {
                 log('Stored server and roleId:', requestPayload.server, requestPayload.role_id);
 
+                // Check if auto-close is requested via query parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                const shouldAutoClose = urlParams.get('leysync_auto_close') === 'true';
+
+                // If auto-close is enabled, show notification and schedule close
+                if (shouldAutoClose) {
+                    showNotification('✓ Login complete! This window will close in {countdown} seconds...', 'success', 4);
+
+                    // Wait 4 seconds before closing
+                    setTimeout(() => {
+                        chrome.runtime.sendMessage({
+                            action: 'CLOSE_CURRENT_TAB'
+                        });
+                    }, 4000);
+                }
+
                 // Broadcast login complete to all tabs
                 chrome.runtime.sendMessage({
                     action: 'GENSHIN_LOGIN_COMPLETE',
@@ -58,6 +74,7 @@ window.addEventListener('message', async (event) => {
         // Inject buttons passing the data directly
         setTimeout(() => {
             injectAPITestButton(requestPayload, responseData, timestamp);
+            injectNotificationTestButton();
         }, 500);
 
         return;
@@ -110,41 +127,12 @@ window.addEventListener('message', async (event) => {
 injectInterceptor();
 
 /**
- * Example: Fetch data from Site A's API via background script
- * This uses the background script to make authenticated requests with cookies
- * 
- * @param {string} url - The API URL to fetch
- * @param {Object} options - Fetch options
- * @returns {Promise<Object>} The API response
- */
-async function fetchViaBackground(url, options = {}) {
-    return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(
-            {
-                action: 'FETCH_API',
-                url: url,
-                options: options
-            },
-            (response) => {
-                if (chrome.runtime.lastError) {
-                    reject(new Error(chrome.runtime.lastError.message));
-                    return;
-                }
-
-                if (response && response.success) {
-                    resolve(response.data);
-                } else {
-                    reject(new Error(response?.error || 'Unknown error'));
-                }
-            }
-        );
-    });
-}
-
-/**
  * Show a notification on the page
+ * @param {string} message - The message to display (use {countdown} as placeholder for countdown)
+ * @param {string} type - 'success' or 'error'
+ * @param {number} countdownSeconds - If provided, starts a countdown and replaces {countdown} in message
  */
-function showNotification(message, type = 'success') {
+function showNotification(message, type = 'success', countdownSeconds = null) {
     const notification = document.createElement('div');
     notification.textContent = message;
     notification.style.cssText = `
@@ -165,10 +153,38 @@ function showNotification(message, type = 'success') {
 
     document.body.appendChild(notification);
 
-    setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease-in';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
+    // If countdown is enabled, update the message every second
+    if (countdownSeconds !== null && message.includes('{countdown}')) {
+        let remaining = countdownSeconds;
+
+        const updateCountdown = () => {
+            notification.textContent = message.replace('{countdown}', remaining);
+        };
+
+        updateCountdown(); // Initial update
+
+        const intervalId = setInterval(() => {
+            remaining--;
+            if (remaining > 0) {
+                updateCountdown();
+            } else {
+                clearInterval(intervalId);
+                notification.textContent = message.replace('{countdown}', remaining);
+            }
+        }, 1000);
+
+        // Auto-remove after countdown completes
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }, countdownSeconds * 1000 + 500); // Add 500ms buffer
+    } else {
+        // Regular notification with 3 second display
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
 }
 
 /**
@@ -228,22 +244,61 @@ function injectAPITestButton(requestPayload, responseData) {
     log('API Test button injected');
 }
 
-async function getCharacterList(server, roleId) {
-    const url = 'https://sg-public-api.hoyolab.com/event/game_record/genshin/api/character/list';
-    const payload = {
-        server: server,
-        role_id: roleId
-    };
-    return await fetchViaBackground(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            "x-rpc-language": "en-us",
-            "x-rpc-lang": "en-us"
-        },
-        body: JSON.stringify(payload)
+/**
+ * Inject notification test button
+ */
+function injectNotificationTestButton() {
+    // Check if we're on the specific page
+    if (!window.location.href.includes('act.hoyolab.com/app/community-game-records-sea')) {
+        return;
+    }
+
+    // Don't inject if button already exists
+    if (document.getElementById('leysync-notification-test-btn')) {
+        return;
+    }
+
+    // Create button
+    const button = document.createElement('button');
+    button.id = 'leysync-notification-test-btn';
+    button.textContent = '🔔 Test Notification';
+    button.style.cssText = `
+            position: fixed;
+            bottom: 140px;
+            right: 20px;
+            z-index: 999999;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            transition: all 0.2s ease;
+        `;
+
+    // Hover effects
+    button.addEventListener('mouseenter', () => {
+        button.style.transform = 'translateY(-2px)';
+        button.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)';
     });
+
+    button.addEventListener('mouseleave', () => {
+        button.style.transform = 'translateY(0)';
+        button.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+    });
+
+    // Click handler
+    button.addEventListener('click', () => {
+        showNotification('✓ Login complete! This window will close in {countdown} seconds...', 'success', 4);
+    });
+
+    // Add to page
+    document.body.appendChild(button);
+    log('Notification Test button injected');
 }
 
 /**
@@ -289,16 +344,6 @@ async function fetchCharacterDetails(server, roleId, characterIds) {
     console.log('Fetch successful:', data);
 
     return data;
-    // return await fetchViaBackground(url, {
-    //     method: 'POST',
-    //     headers: {
-    //         'Content-Type': 'application/json',
-    //         'Accept': 'application/json',
-    //         "x-rpc-language": "en-us",
-    //         "x-rpc-lang": "en-us"
-    //     },
-    //     body: JSON.stringify(payload)
-    // });
 }
 
 /**
@@ -403,24 +448,3 @@ async function testAPIFetch(requestPayload, responseData) {
         button.style.opacity = '1';
     }
 }
-
-/**
- * Listen for messages from background script or other extension parts
- */
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    log('Received runtime message:', request);
-
-    if (request.action === 'FETCH_GENSHIN') {
-        log('Import request received from Genshin Optimizer');
-        showNotification('Import request received!', 'success');
-
-        // TODO: Initiate data export or other logic here
-        // distinct from the interception logic
-
-        sendResponse({ success: true, message: 'Import initiated' });
-        return false; // Sync response is fine here
-    }
-
-    // Handle other messages potentially
-    return false;
-});

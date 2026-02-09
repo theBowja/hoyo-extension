@@ -3,6 +3,9 @@
 
 'use strict';
 
+// Track the tab that requested login
+let loginRequesterTabId = null;
+
 /**
  * Initialize extension on install
  */
@@ -50,7 +53,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Received message:', request.action);
 
     if (request.action === 'GET_GENSHIN_CHARACTER_LIST') {
-        getGenshinCharacterList(request)
+        getGenshinCharacterList(request, sender.tab?.id)
             .then(response => {
                 sendResponse({ success: true, data: response });
             })
@@ -65,7 +68,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     if (request.action === 'GET_GENSHIN_CHARACTER_DATA') {
-        getGenshinCharacterData(request)
+        getGenshinCharacterData(request, sender.tab?.id)
             .then(response => {
                 sendResponse({ success: true, data: response });
             })
@@ -79,10 +82,41 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 
+    if (request.action === 'GENSHIN_LOGIN_COMPLETE') {
+        console.log('Login complete received:', request);
+
+        // Forward the message to the requester tab if we have one
+        if (loginRequesterTabId) {
+            console.log('Forwarding login complete to requester tab:', loginRequesterTabId);
+            chrome.tabs.sendMessage(loginRequesterTabId, request).catch(error => {
+                console.error('Error forwarding login complete:', error);
+            });
+
+            // Clear the requester tab ID
+            loginRequesterTabId = null;
+        }
+
+        return false;
+    }
+
+    if (request.action === 'CLOSE_CURRENT_TAB') {
+        console.log('Close current tab requested');
+
+        // Close the tab that sent this message
+        if (sender.tab && sender.tab.id) {
+            console.log('Closing tab:', sender.tab.id);
+            chrome.tabs.remove(sender.tab.id).catch(error => {
+                console.error('Error closing tab:', error);
+            });
+        }
+
+        return false;
+    }
+
     return false;
 });
 
-async function resolveGenshinUser(request) {
+async function resolveGenshinUser(request, requesterTabId) {
     if (request.server && request.roleId) return;
 
     // Retrieve server and roleId from storage
@@ -93,15 +127,15 @@ async function resolveGenshinUser(request) {
         console.log('Retrieved from storage - server:', request.server, 'roleId:', request.roleId);
     } else if (request.autoLogin) {
         console.log('No server or roleId found, opening login popup');
-        await openHoyoLabLoginPopup();
+        await openHoyoLabLoginPopup(requesterTabId);
     } else {
         throwLoginError();
     }
 }
 
-async function getGenshinCharacterList(request) {
+async function getGenshinCharacterList(request, requesterTabId) {
     const url = 'https://sg-public-api.hoyolab.com/event/game_record/genshin/api/character/list';
-    await resolveGenshinUser(request);
+    await resolveGenshinUser(request, requesterTabId);
     const payload = {
         server: request.server,
         role_id: request.roleId
@@ -118,14 +152,14 @@ async function getGenshinCharacterList(request) {
         body: JSON.stringify(payload)
     };
     const response = await fetch(url, fetchOptions);
-    return await getJsonResponseData(response, request.autoLogin, 'getGenshinCharacterList');
+    return await getJsonResponseData(response, request.autoLogin, requesterTabId, 'getGenshinCharacterList');
 }
 
-async function getGenshinCharacterData(request) {
+async function getGenshinCharacterData(request, requesterTabId) {
     const url = 'https://sg-public-api.hoyolab.com/event/game_record/genshin/api/character/detail';
-    await resolveGenshinUser(request);
+    await resolveGenshinUser(request, requesterTabId);
     if (!request.characterIds) {
-        const data = await getGenshinCharacterList(request);
+        const data = await getGenshinCharacterList(request, requesterTabId);
         request.characterIds = data.list.map(character => character.id);
     }
     const payload = {
@@ -145,12 +179,19 @@ async function getGenshinCharacterData(request) {
         body: JSON.stringify(payload)
     };
     const response = await fetch(url, fetchOptions);
-    return await getJsonResponseData(response, request.autoLogin, 'getGenshinCharacterData');
+    return await getJsonResponseData(response, request.autoLogin, requesterTabId, 'getGenshinCharacterData');
 }
 
-async function openHoyoLabLoginPopup() {
-    const loginUrl = 'https://act.hoyolab.com/app/community-game-records-sea/index.html';
+async function openHoyoLabLoginPopup(requesterTabId) {
+    const loginUrl = 'https://act.hoyolab.com/app/community-game-records-sea/index.html?leysync_auto_close=true';
     console.log('Opening HoyoLab login popup');
+
+    // Store the requester tab ID
+    if (requesterTabId) {
+        loginRequesterTabId = requesterTabId;
+        console.log('Stored requester tab ID:', loginRequesterTabId);
+    }
+
     await chrome.windows.create({
         url: loginUrl,
         type: 'popup',
@@ -159,12 +200,12 @@ async function openHoyoLabLoginPopup() {
     });
 }
 
-async function getJsonResponseData(response, autoLogin, functionName) {
+async function getJsonResponseData(response, autoLogin, requesterTabId, functionName) {
     const data = await response.json();
     console.log(functionName, 'response:', data);
     if (data.retcode === 10001) {
         if (autoLogin) {
-            await openHoyoLabLoginPopup();
+            await openHoyoLabLoginPopup(requesterTabId);
         }
         throwLoginError();
     }
